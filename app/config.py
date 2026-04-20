@@ -61,7 +61,13 @@ class Settings(BaseSettings):
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # ── CORS ─────────────────────────────────────────────────────
-    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # Origins are scheme + host (+ port), never paths (e.g. /login is not part of the origin).
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://atlas-backend-beta.vercel.app",
+        "https://atlas-frontend-lake.vercel.app",
+    ]
 
     # ── Storage (switchable) ─────────────────────────────────────
     STORAGE_BACKEND: StorageBackend = StorageBackend.LOCAL
