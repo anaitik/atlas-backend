@@ -1,0 +1,43 @@
+"""Compatibility shim for template generation service."""
+
+from app.agentic.template.generation import (
+    SYSTEM_PROMPT,
+    TEMPLATE_SCHEMA_DESCRIPTION,
+    RULES_SCHEMA_DESCRIPTION,
+    _convert_pdf_to_images,
+    _extract_csv_text,
+    _extract_image_text,
+    _extract_pdf_text,
+    _get_tesseract_cmd,
+    _ocr_bytes,
+    _ocr_path,
+    build_generation_prompt,
+    build_compact_system_prompt,
+    build_system_prompt_from_generated_template,
+    extract_document_preview,
+    generate_template_from_document,
+    normalize_generated_template,
+    parse_generation_response,
+    validate_generated_template,
+)
+
+__all__ = [
+    "SYSTEM_PROMPT",
+    "TEMPLATE_SCHEMA_DESCRIPTION",
+    "RULES_SCHEMA_DESCRIPTION",
+    "_get_tesseract_cmd",
+    "_ocr_bytes",
+    "_convert_pdf_to_images",
+    "_extract_pdf_text",
+    "_extract_image_text",
+    "_ocr_path",
+    "_extract_csv_text",
+    "extract_document_preview",
+    "build_generation_prompt",
+    "build_compact_system_prompt",
+    "parse_generation_response",
+    "validate_generated_template",
+    "build_system_prompt_from_generated_template",
+    "normalize_generated_template",
+    "generate_template_from_document",
+]

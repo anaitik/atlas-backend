@@ -1,0 +1,135 @@
+{
+  "electricity_kwh_total": {
+    "description": "Total electricity consumption in kWh across all facilities and the full reporting period",
+    "pillar": "environmental",
+    "unit": "kWh",
+    "suggested_tool": "aggregate_period",
+    "tags": ["energy", "scope2"]
+  },
+  "gas_kwh_total": {
+    "description": "Total natural gas consumption in kWh across all facilities",
+    "pillar": "environmental",
+    "unit": "kWh",
+    "suggested_tool": "aggregate_period",
+    "tags": ["energy", "scope1"]
+  },
+  "fuel_litres_total": {
+    "description": "Total fuel consumed in litres (diesel, petrol, LPG combined)",
+    "pillar": "environmental",
+    "unit": "litres",
+    "suggested_tool": "aggregate_period",
+    "tags": ["energy", "scope1", "fleet"]
+  },
+  "scope1_kgco2e": {
+    "description": "Scope 1 direct greenhouse gas emissions in kgCO2e from fuel combustion",
+    "pillar": "environmental",
+    "unit": "kgCO2e",
+    "suggested_tool": "apply_emission_factor",
+    "tags": ["emissions", "scope1", "ghg"]
+  },
+  "scope2_kgco2e": {
+    "description": "Scope 2 indirect greenhouse gas emissions from purchased electricity in kgCO2e",
+    "pillar": "environmental",
+    "unit": "kgCO2e",
+    "suggested_tool": "apply_emission_factor",
+    "tags": ["emissions", "scope2", "ghg"]
+  },
+  "scope1_tco2e": {
+    "description": "Scope 1 emissions in tCO2e",
+    "pillar": "environmental",
+    "unit": "tCO2e",
+    "suggested_tool": "unit_convert",
+    "tags": ["emissions", "scope1", "ghg"]
+  },
+  "scope2_tco2e": {
+    "description": "Scope 2 emissions in tCO2e",
+    "pillar": "environmental",
+    "unit": "tCO2e",
+    "suggested_tool": "unit_convert",
+    "tags": ["emissions", "scope2", "ghg"]
+  },
+  "total_ghg_tco2e": {
+    "description": "Total Scope 1 plus Scope 2 greenhouse gas emissions in tCO2e",
+    "pillar": "environmental",
+    "unit": "tCO2e",
+    "suggested_tool": "scope_total",
+    "tags": ["emissions", "ghg", "total"]
+  },
+  "energy_intensity_kwh_per_employee": {
+    "description": "Energy intensity: total energy kWh divided by number of employees",
+    "pillar": "environmental",
+    "unit": "kWh/employee",
+    "suggested_tool": "calc_intensity",
+    "tags": ["energy", "intensity"]
+  },
+  "emission_intensity_kgco2e_per_employee": {
+    "description": "GHG emission intensity: total kgCO2e divided by number of employees",
+    "pillar": "environmental",
+    "unit": "kgCO2e/employee",
+    "suggested_tool": "calc_intensity",
+    "tags": ["emissions", "intensity"]
+  },
+  "electricity_yoy_pct": {
+    "description": "Year-on-year percentage change in electricity consumption",
+    "pillar": "environmental",
+    "unit": "percent",
+    "suggested_tool": "yoy_delta",
+    "tags": ["energy", "trend"]
+  },
+  "emissions_yoy_pct": {
+    "description": "Year-on-year percentage change in total greenhouse gas emissions",
+    "pillar": "environmental",
+    "unit": "percent",
+    "suggested_tool": "yoy_delta",
+    "tags": ["emissions", "trend"]
+  },
+  "headcount": {
+    "description": "Total number of employees at reporting date",
+    "pillar": "social",
+    "unit": "employees",
+    "suggested_tool": "direct_read",
+    "tags": ["workforce", "social"]
+  },
+  "lost_time_injury_rate": {
+    "description": "Lost-time injury frequency rate per 1,000,000 hours worked",
+    "pillar": "social",
+    "unit": "LTIFR",
+    "suggested_tool": "calc_intensity",
+    "tags": ["safety", "social"]
+  },
+  "training_hours_per_employee": {
+    "description": "Average training hours per employee during the reporting year",
+    "pillar": "social",
+    "unit": "hours/employee",
+    "suggested_tool": "calc_intensity",
+    "tags": ["training", "social"]
+  },
+  "board_independence_pct": {
+    "description": "Percentage of independent non-executive board members",
+    "pillar": "governance",
+    "unit": "percent",
+    "suggested_tool": "direct_read",
+    "tags": ["board", "governance"]
+  },
+  "whistleblower_cases": {
+    "description": "Number of whistleblower or ethics hotline cases reported",
+    "pillar": "governance",
+    "unit": "cases",
+    "suggested_tool": "direct_read",
+    "tags": ["ethics", "governance"]
+  },
+  "water_consumption_m3_total": {
+    "description": "Total water consumption in cubic meters (m3)",
+    "pillar": "environmental",
+    "unit": "m3",
+    "suggested_tool": "aggregate_period",
+    "tags": ["water", "environmental"]
+  },
+  "waste_generated_kg_total": {
+    "description": "Total waste generated in kilograms (kg)",
+    "pillar": "environmental",
+    "unit": "kg",
+    "suggested_tool": "aggregate_period",
+    "tags": ["waste", "environmental"]
+  }
+}

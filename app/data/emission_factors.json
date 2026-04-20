@@ -1,0 +1,110 @@
+{
+  "version": "2024.1",
+  "source": "IPCC AR6 / UK DESNZ / GHG Protocol",
+  "updated": "2024-01-01",
+  "notes": "All factors are stored in kgCO2e per input unit.",
+  "factors": {
+    "electricity_grid_de": {
+      "value": 0.364,
+      "unit": "kgCO2e/kWh",
+      "source": "UBA Germany 2023 grid emission factor",
+      "scope": 2
+    },
+    "electricity_grid_uk": {
+      "value": 0.2121,
+      "unit": "kgCO2e/kWh",
+      "source": "UK DESNZ 2024 grid emission factor",
+      "scope": 2
+    },
+    "electricity_grid_eu_avg": {
+      "value": 0.276,
+      "unit": "kgCO2e/kWh",
+      "source": "EEA EU27 average 2023",
+      "scope": 2
+    },
+    "natural_gas": {
+      "value": 0.20268,
+      "unit": "kgCO2e/kWh",
+      "source": "UK DESNZ 2024 natural gas combustion",
+      "scope": 1
+    },
+    "natural_gas_m3": {
+      "value": 2.042,
+      "unit": "kgCO2e/m3",
+      "source": "UK DESNZ 2024 natural gas per cubic meter",
+      "scope": 1
+    },
+    "diesel_combustion": {
+      "value": 2.68784,
+      "unit": "kgCO2e/litre",
+      "source": "UK DESNZ 2024 diesel combustion",
+      "scope": 1
+    },
+    "petrol_combustion": {
+      "value": 2.31445,
+      "unit": "kgCO2e/litre",
+      "source": "UK DESNZ 2024 petrol combustion",
+      "scope": 1
+    },
+    "lpg_combustion": {
+      "value": 1.51361,
+      "unit": "kgCO2e/litre",
+      "source": "UK DESNZ 2024 LPG combustion",
+      "scope": 1
+    },
+    "hvo_combustion": {
+      "value": 0.19535,
+      "unit": "kgCO2e/litre",
+      "source": "UK DESNZ 2024 HVO combustion",
+      "scope": 1
+    },
+    "kerosene_combustion": {
+      "value": 2.52842,
+      "unit": "kgCO2e/litre",
+      "source": "UK DESNZ 2024 kerosene combustion",
+      "scope": 1
+    },
+    "water_supply": {
+      "value": 0.000149,
+      "unit": "kgCO2e/litre",
+      "source": "UK DESNZ 2024 water supply",
+      "scope": 3
+    },
+    "water_treatment": {
+      "value": 0.000272,
+      "unit": "kgCO2e/litre",
+      "source": "UK DESNZ 2024 water treatment",
+      "scope": 3
+    },
+    "waste_landfill": {
+      "value": 0.58712,
+      "unit": "kgCO2e/kg",
+      "source": "UK DESNZ 2024 municipal solid waste to landfill",
+      "scope": 3
+    },
+    "waste_recycled": {
+      "value": 0.02126,
+      "unit": "kgCO2e/kg",
+      "source": "UK DESNZ 2024 mixed recycling",
+      "scope": 3
+    },
+    "business_travel_car_average": {
+      "value": 0.16837,
+      "unit": "kgCO2e/km",
+      "source": "UK DESNZ 2024 average passenger car",
+      "scope": 3
+    },
+    "business_travel_flight_short_haul": {
+      "value": 0.15553,
+      "unit": "kgCO2e/passenger-km",
+      "source": "UK DESNZ 2024 short-haul flight economy",
+      "scope": 3
+    },
+    "business_travel_flight_long_haul": {
+      "value": 0.19085,
+      "unit": "kgCO2e/passenger-km",
+      "source": "UK DESNZ 2024 long-haul flight economy",
+      "scope": 3
+    }
+  }
+}
