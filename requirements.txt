@@ -37,6 +37,7 @@ langchain-openai==0.3.12
 # === Blockchain ===
 web3==7.9.0
 
+
 # === Observability ===
 structlog==25.1.0
 python-json-logger==3.3.0
