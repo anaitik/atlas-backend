@@ -21,7 +21,10 @@ async def connect_db() -> AsyncIOMotorDatabase:
     global _client, _database
 
     settings = get_settings()
-    _client = AsyncIOMotorClient(settings.MONGODB_CONNECTION_STRING)
+    _client = AsyncIOMotorClient(
+        settings.MONGODB_CONNECTION_STRING,
+        serverSelectionTimeoutMS=5000,  # Fail fast if DB unreachable
+    )
     _database = _client[settings.MONGODB_DATABASE_NAME]
 
     # Import all document models for Beanie registration

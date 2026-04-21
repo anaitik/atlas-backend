@@ -30,15 +30,23 @@ async def lifespan(app: FastAPI):
     setup_logging()
     logger.info("starting_application", app=settings.APP_NAME, env=settings.ENVIRONMENT.value)
 
-    # Connect to MongoDB
-    await connect_db()
-    logger.info("database_connected", db=settings.MONGODB_DATABASE_NAME)
+    try:
+        # Connect to MongoDB
+        await connect_db()
+        logger.info("database_connected", db=settings.MONGODB_DATABASE_NAME)
+    except Exception as e:
+        logger.error("startup_failed", error=str(e), exc_info=True)
+        # We don't raise here to allow the process to stay alive for diagnostics, 
+        # but the /ready endpoint will correctly report degradation.
 
     yield
 
     # Shutdown
-    await close_db()
-    logger.info("application_shutdown")
+    try:
+        await close_db()
+        logger.info("application_shutdown")
+    except Exception as e:
+        logger.error("shutdown_error", error=str(e))
 
 
 settings = get_settings()
@@ -54,7 +62,6 @@ app = FastAPI(
 )
 
 # ── Middleware Stack (order matters — last added = first executed) ─
-app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -62,6 +69,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestContextMiddleware)
 
 # ── Exception Handlers ──────────────────────────────────────────

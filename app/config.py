@@ -6,9 +6,10 @@ Designed for local-first development with production switchover.
 
 from __future__ import annotations
 
+import json
 from enum import Enum
 from functools import lru_cache
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import AliasChoices, Field
 from pydantic import field_validator
@@ -61,7 +62,24 @@ class Settings(BaseSettings):
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # ── CORS ─────────────────────────────────────────────────────
-    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://atlas-frontend-lake.vercel.app",
+        "https://atlas-frontend-lake.vercel.app/",
+    ]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            if v.startswith("[") and v.endswith("]"):
+                try:
+                    return json.loads(v)
+                except Exception:
+                    pass
+            return [i.strip() for i in v.split(",") if i.strip()]
+        return v
 
     # ── Storage (switchable) ─────────────────────────────────────
     STORAGE_BACKEND: StorageBackend = StorageBackend.LOCAL
