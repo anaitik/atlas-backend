@@ -84,6 +84,16 @@ class Settings(BaseSettings):
     # ── Storage (switchable) ─────────────────────────────────────
     STORAGE_BACKEND: StorageBackend = StorageBackend.LOCAL
     LOCAL_STORAGE_PATH: str = "./storage"
+
+    @field_validator("LOCAL_STORAGE_PATH", mode="before")
+    @classmethod
+    def adjust_local_storage_path(cls, v: str) -> str:
+        import os
+        # Vercel serverless environment has a read-only filesystem except for /tmp
+        if os.getenv("VERCEL") and v.startswith("."):
+            return "/tmp/storage"
+        return v
+
     # S3 / MinIO settings — enable when switching to prod
     S3_ENDPOINT_URL: Optional[str] = None
     S3_ACCESS_KEY: Optional[str] = None
