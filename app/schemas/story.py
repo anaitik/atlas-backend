@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Literal
 
 from pydantic import BaseModel, Field
 
@@ -19,4 +19,9 @@ class PipelineStoryOut(BaseModel):
     events: List[StoryEventOut] = Field(default_factory=list)
     generated_at: datetime
     sha256_hash: Optional[str] = None
+    blockchain_enabled: bool = False
+    chain_id: Optional[int] = None
+    contract_address: Optional[str] = None
+    verified_on_chain: bool = False
+    verification_status: Literal["verified", "not_found", "not_configured"] = "not_configured"
     blockchain_tx_id: Optional[str] = None

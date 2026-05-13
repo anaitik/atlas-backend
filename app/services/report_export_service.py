@@ -1,12 +1,12 @@
 """
 Service for exporting reports to various formats.
-Note: PDF and DOCX conversion usually requires additional system-level 
-dependencies (like wkhtmltopdf or pandoc) or specialized python libraries 
-(xhtml2pdf, python-docx). For this wave, we provide the XHTML snapshot 
-and stubs for other formats.
+Note: PDF and DOCX conversion usually requires additional system-level
+dependencies (like wkhtmltopdf or pandoc) or specialized python libraries
+(xhtml2pdf, python-docx). This service currently supports XHTML only.
 """
 from typing import Literal
 from app.models.report import Report
+from app.core.errors import AppError, ErrorCode
 
 ReportExportFormat = Literal["xhtml", "pdf", "docx"]
 
@@ -19,14 +19,11 @@ async def export_report(report: Report, format: ReportExportFormat) -> bytes:
 
     if format == "xhtml":
         return report.canonical_xhtml.encode("utf-8")
-    
-    if format == "pdf":
-        # In a real production environment, we would use xhtml2pdf or weasyprint
-        # For now, we return a text-based marker with the report content
-        return f"PDF_STUB: {report.exec_summary}".encode("utf-8")
-        
-    if format == "docx":
-        # In a real production environment, we would use python-docx
-        return f"DOCX_STUB: {report.exec_summary}".encode("utf-8")
 
-    raise ValueError(f"Unsupported export format: {format}")
+    if format in {"pdf", "docx"}:
+        raise AppError(
+            ErrorCode.CONFLICT,
+            f"{format.upper()} export is not enabled in this environment. Use XHTML export.",
+        )
+
+    raise AppError(ErrorCode.VALIDATION_ERROR, f"Unsupported export format: {format}")

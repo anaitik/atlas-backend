@@ -21,9 +21,14 @@ async def connect_db() -> AsyncIOMotorDatabase:
     global _client, _database
 
     settings = get_settings()
+    import structlog
+    logger = structlog.get_logger()
+    logger.info("connecting_to_mongodb", uri=settings.MONGODB_CONNECTION_STRING.split("@")[-1]) # Log only host part for security
+    
     _client = AsyncIOMotorClient(
         settings.MONGODB_CONNECTION_STRING,
-        serverSelectionTimeoutMS=5000,  # Fail fast if DB unreachable
+        serverSelectionTimeoutMS=30000,  # Increased timeout for slower environments
+        connectTimeoutMS=10000,
     )
     _database = _client[settings.MONGODB_DATABASE_NAME]
 

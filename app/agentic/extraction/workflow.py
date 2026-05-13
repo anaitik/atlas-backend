@@ -196,7 +196,7 @@ async def run_extraction(
         raise AppError(ErrorCode.NOT_FOUND, "Document or Template not found")
     if actor_company_id and actor_company_id != doc.company_id:
         raise AppError(ErrorCode.FORBIDDEN, "Cross-tenant access denied")
-    if template.company_id != doc.company_id:
+    if template.company_id != doc.company_id and template.company_id != "platform":
         raise AppError(ErrorCode.BAD_REQUEST, "Template and document belong to different companies")
     if template.workspace_id and template.workspace_id != doc.workspace_id:
         raise AppError(ErrorCode.BAD_REQUEST, "Template is not available for this workspace")
@@ -277,7 +277,7 @@ async def run_extraction_prerun(
         raise AppError(ErrorCode.NOT_FOUND, "Document or Template not found")
     if actor_company_id and actor_company_id != doc.company_id:
         raise AppError(ErrorCode.FORBIDDEN, "Cross-tenant access denied")
-    if template.company_id != doc.company_id:
+    if template.company_id != doc.company_id and template.company_id != "platform":
         raise AppError(ErrorCode.BAD_REQUEST, "Template and document belong to different companies")
     if template.workspace_id and template.workspace_id != doc.workspace_id:
         raise AppError(ErrorCode.BAD_REQUEST, "Template is not available for this workspace")

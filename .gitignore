@@ -26,3 +26,5 @@ htmlcov/
 
 # Runtime storage
 storage/
+
+.env

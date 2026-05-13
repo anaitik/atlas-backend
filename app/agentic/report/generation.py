@@ -207,6 +207,10 @@ INTERVIEW_QUESTIONS: list[dict[str, str]] = [
 ]
 
 QUESTION_INDEX = {q["id"]: q for q in INTERVIEW_QUESTIONS}
+LEGACY_QUESTION_ID_ALIASES: dict[str, str] = {
+    # Backward compatibility for older saved interview answer IDs.
+    "g_policy": "g_ethics_conduct",
+}
 
 
 # ─── System Prompts ──────────────────────────────────────────────────────────
@@ -304,13 +308,15 @@ def _normalize_interview_answers(interview_answers: list[Any]) -> list[dict[str,
     normalized: list[dict[str, Any]] = []
     for item in interview_answers:
         raw = item.model_dump() if hasattr(item, "model_dump") else dict(item)
-        question = QUESTION_INDEX.get(raw.get("question_id", ""))
+        raw_question_id = str(raw.get("question_id", "")).strip()
+        lookup_question_id = LEGACY_QUESTION_ID_ALIASES.get(raw_question_id, raw_question_id)
+        question = QUESTION_INDEX.get(lookup_question_id)
         if not question:
             continue
         answer = (raw.get("answer") or "").strip()
         normalized.append(
             {
-                "question_id": question["id"],
+                "question_id": raw_question_id or question["id"],
                 "question": question["text"],
                 "pillar": question["pillar"],
                 "category": question.get("category", ""),
@@ -521,7 +527,7 @@ async def _generate_exec_summary(
 
 def render_report_markdown(report: Report) -> str:
     lines = [
-        f"# Sustainability Report — {report.reporting_year}",
+        f"# Sustainability Report - {report.reporting_year}",
         "",
         "## Executive Summary",
         report.exec_summary,

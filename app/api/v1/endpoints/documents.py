@@ -27,6 +27,8 @@ async def upload_document(
     manager: Annotated[TokenData, Depends(require_manager)]
 ):
     """Uploads a source document, computes its provenance hash, and saves to storage."""
+    if company_id == "null" or not company_id:
+        company_id = "platform"
     # Strict tenancy check
     if manager.company_id and manager.company_id != company_id:
         raise AppError(ErrorCode.FORBIDDEN, "Cross-tenant access denied")

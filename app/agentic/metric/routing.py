@@ -72,7 +72,23 @@ def _heuristic_route(metric_key: str, metric_definition: dict[str, Any], gold_re
 
     if metric_key in ("scope1_kgco2e", "scope1_tco2e", "scope2_kgco2e", "scope2_tco2e"):
         scope_prefix = "scope1" if "scope1" in metric_key else "scope2"
-        direct_key = next((key for key in catalog_keys if scope_prefix in key.lower()), None)
+        direct_key = next((key for key in catalog_keys if key == metric_key), None)
+        
+        if not direct_key:
+            alt_key = f"{scope_prefix}_kgco2e" if "tco2e" in metric_key else f"{scope_prefix}_tco2e"
+            direct_key = next((key for key in catalog_keys if key == alt_key), None)
+            if direct_key:
+                from_unit = "kgCO2e" if "kgco2e" in alt_key else "tCO2e"
+                return {
+                    "tool_name": "unit_convert",
+                    "arguments": {
+                        "source_key": direct_key,
+                        "from_unit": _field_unit(gold_records, direct_key) or from_unit,
+                        "to_unit": unit,
+                        "mapping_confidence": 0.95
+                    }
+                }
+
         if direct_key:
             return {
                 "tool_name": "aggregate_period",

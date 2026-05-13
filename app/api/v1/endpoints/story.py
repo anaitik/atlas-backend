@@ -15,7 +15,7 @@ router = APIRouter()
 @router.get("/{workspace_id}", response_model=SuccessResponse[PipelineStoryOut])
 async def get_pipeline_story(
     workspace_id: str,
-    user: Annotated[TokenData, Depends(get_current_user)],
+    _user: Annotated[TokenData, Depends(get_current_user)],
 ):
     """
     Get the narrative 'story' of the document pipeline for a workspace.
@@ -40,23 +40,39 @@ async def get_pipeline_story(
     
     story_text = "No tracked workspace activity has been recorded yet."
     workspace_hash = None
+    verification = {
+        **blockchain_service.blockchain_metadata(),
+        "verified_on_chain": False,
+        "verification_status": "not_configured",
+    }
     tx_id = None
     
     if events_raw:
         count = len(events_raw)
-        story_text = f"The pipeline sequence has successfully tracked {count} distinct events within this reporting workspace. All events are cryptographically hashed and anchored to the Polygon network for immutable audit playback."
+        story_text = (
+            f"The pipeline sequence has successfully tracked {count} distinct events within this reporting workspace. "
+            "All events are hashed for replayable audit history."
+        )
         # Hash the audit trail
         hash_str = "|".join(audit_hash_source)
         workspace_hash = hashlib.sha256(hash_str.encode("utf-8")).hexdigest()
-        
-        # In a real system, you might have a background task anchoring this.
-        # We will attempt to fetch it or anchor it dynamically here for demo simplicity.
-        # Note: If it's already anchored it won't anchor again if the hash is same, or we can just anchor it.
+
         try:
-            # We just mock a single tx if the blockchain returns a known verification
-            tx_id = await blockchain_service.anchor_document_hash(workspace_hash)
+            verification = await blockchain_service.build_hash_verification(workspace_hash)
         except Exception:
-            pass
+            verification = {
+                **blockchain_service.blockchain_metadata(),
+                "sha256_hash": workspace_hash,
+                "verified_on_chain": False,
+                "verification_status": "not_found",
+            }
+
+        if verification.get("verification_status") == "verified":
+            story_text += " The workspace fingerprint is verified on-chain."
+        elif verification.get("verification_status") == "not_found":
+            story_text += " The workspace fingerprint is recorded off-chain and awaiting on-chain anchoring."
+        else:
+            story_text += " Blockchain verification is not configured in this environment."
 
     audit_story = PipelineStoryOut(
         workspace_id=workspace_id,
@@ -64,6 +80,11 @@ async def get_pipeline_story(
         events=events_out,
         generated_at=datetime.now(timezone.utc),
         sha256_hash=workspace_hash,
+        blockchain_enabled=bool(verification.get("blockchain_enabled")),
+        chain_id=verification.get("chain_id"),
+        contract_address=verification.get("contract_address"),
+        verified_on_chain=bool(verification.get("verified_on_chain")),
+        verification_status=verification.get("verification_status", "not_configured"),
         blockchain_tx_id=tx_id,
     )
     return api_response(audit_story)
@@ -71,7 +92,7 @@ async def get_pipeline_story(
 @router.get("/{workspace_id}/events", response_model=SuccessResponse[List[StoryEventOut]])
 async def get_pipeline_events(
     workspace_id: str,
-    user: Annotated[TokenData, Depends(get_current_user)],
+    _user: Annotated[TokenData, Depends(get_current_user)],
     limit: int = 20,
 ):
     """

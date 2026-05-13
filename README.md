@@ -11,6 +11,15 @@ Backend API service for Atlas Breakdown.
 3. Run API:
    - `uvicorn app.main:app --host 0.0.0.0 --port 8000`
 
+## Demo Seed
+- Prepare/reset investor demo data in one command:
+  - `python demo_seed.py`
+- This provisions:
+  - Active `system_admin` account
+  - `NovaTerra Manufacturing Ltd`
+  - `FY2025 CSRD Report` workspace with default ESG templates
+  - Role users (`company_owner`, `sustainability_manager`, `data_reviewer`, `report_viewer`)
+
 ## Docker
 1. Build:
    - `docker build -t atlas-backend .`
