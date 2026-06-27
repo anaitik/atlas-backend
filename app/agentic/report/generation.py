@@ -405,6 +405,7 @@ def _fallback_exec_summary(metrics: list[Metric], reporting_year: int) -> str:
 
 
 def _build_data_lineage(metrics: list[Metric]) -> list[dict[str, Any]]:
+    """Sync fallback — prefer ``build_data_lineage`` for enriched names."""
     return [
         {
             "metric_id": str(m.id),
@@ -419,6 +420,53 @@ def _build_data_lineage(metrics: list[Metric]) -> list[dict[str, Any]]:
         }
         for m in metrics
     ]
+
+
+async def build_data_lineage(metrics: list[Metric]) -> list[dict[str, Any]]:
+    from app.models.document import Document
+    from app.models.extraction import ExtractedData
+
+    extraction_ids: list[str] = []
+    for metric in metrics:
+        extraction_ids.extend(str(source_id) for source_id in (metric.source_extracted_data_ids or []))
+    extraction_ids = list(dict.fromkeys(extraction_ids))
+
+    extractions = (
+        await ExtractedData.find({"id": {"$in": extraction_ids}}).to_list()
+        if extraction_ids
+        else []
+    )
+    document_ids = list({item.document_id for item in extractions if item.document_id})
+    documents = await Document.find({"id": {"$in": document_ids}}).to_list() if document_ids else []
+    document_names = {doc.id: doc.filename for doc in documents}
+    extraction_by_id = {item.id: item for item in extractions}
+
+    rows: list[dict[str, Any]] = []
+    for metric in metrics:
+        source_id = str(metric.source_extracted_data_ids[0]) if metric.source_extracted_data_ids else None
+        extraction = extraction_by_id.get(source_id or "")
+        document_name = document_names.get(extraction.document_id) if extraction and extraction.document_id else None
+        metadata = metric.metadata or {}
+        input_keys = metadata.get("input_keys") or []
+        field_key = input_keys[0] if input_keys else None
+        field_label = field_key.replace("_", " ").title() if isinstance(field_key, str) else None
+
+        rows.append(
+            {
+                "metric_id": str(metric.id),
+                "metric_code": metric.metric_code,
+                "name": metric.name,
+                "value": metric.value,
+                "unit": metric.unit,
+                "status": metric.status,
+                "sources": [str(s) for s in metric.source_extracted_data_ids],
+                "pillar": _assign_pillar(metric),
+                "metadata": metric.metadata,
+                "source_document_name": document_name,
+                "source_field_label": field_label,
+            }
+        )
+    return rows
 
 
 # ─── Core Generation ─────────────────────────────────────────────────────────
@@ -607,7 +655,7 @@ async def generate_report(
         status="draft",
         exec_summary=exec_summary,
         sections=sections,
-        data_lineage=_build_data_lineage(selected_metrics),
+        data_lineage=await build_data_lineage(selected_metrics),
         interview_answers=normalized_answers,
         generated_by_id=actor_id,
     )
@@ -666,7 +714,7 @@ async def regenerate_section(
     report.exec_summary = await _generate_exec_summary(selected_metrics, report.sections, report.reporting_year, final_format)
     report.output_format = final_format
     report.interview_answers = normalized_answers
-    report.data_lineage = _build_data_lineage(selected_metrics)
+    report.data_lineage = await build_data_lineage(selected_metrics)
 
     await report.save_with_timestamp()
 

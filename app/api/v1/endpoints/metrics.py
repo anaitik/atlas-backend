@@ -5,6 +5,7 @@ from app.core.responses import SuccessResponse, api_response
 from app.dependencies.auth import require_manager, require_role, TokenData
 from app.models.metric import Metric
 from app.schemas.metric import (
+    ManualMetricEntry,
     MetricAgentRunRequest,
     MetricCreate,
     MetricDefinitionOut,
@@ -131,6 +132,81 @@ async def run_metric_agent(
     return api_response([MetricOut(**item.model_dump()) for item in items])
 
 
+@router.post("/manual-entry", response_model=SuccessResponse[MetricOut])
+async def manual_metric_entry(
+    data: ManualMetricEntry,
+    manager: Annotated[TokenData, Depends(require_manager)],
+):
+    """Create or update a metric via direct human entry (no document extraction required)."""
+    if manager.company_id and manager.company_id != data.company_id:
+        from app.core.errors import AppError, ErrorCode
+        raise AppError(ErrorCode.FORBIDDEN, "Cross-tenant access denied")
+
+    from app.models.metric import Metric
+    from app.services import audit_service
+
+    metadata: dict = {
+        "input_mode": "manual",
+        "human_override": True,
+        "source_type": "manual_entry",
+        "pillar": data.pillar,
+    }
+    if data.evidence_note:
+        metadata["evidence_note"] = data.evidence_note
+    if data.evidence_document_id:
+        metadata["evidence_document_id"] = data.evidence_document_id
+
+    existing = await Metric.find_one({
+        "company_id": data.company_id,
+        "workspace_id": data.workspace_id,
+        "metric_code": data.metric_code,
+    })
+
+    if existing:
+        existing.name = data.name
+        existing.value = data.value
+        existing.unit = data.unit
+        existing.pillar = data.pillar
+        existing.metadata = metadata
+        existing.status = "approved"
+        existing.reviewer = manager.user_id
+        await existing.save_with_timestamp()
+        metric = existing
+    else:
+        metric = Metric(
+            company_id=data.company_id,
+            workspace_id=data.workspace_id,
+            metric_code=data.metric_code,
+            name=data.name,
+            value=data.value,
+            unit=data.unit,
+            pillar=data.pillar,
+            metadata=metadata,
+            source_extracted_data_ids=[],
+            status="approved",
+            reviewer=manager.user_id,
+        )
+        await metric.insert()
+
+    # Sync to interview: if this metric matches a VSME question, auto-fill the response
+    try:
+        from app.services.interview_service import sync_metric_to_interview
+        await sync_metric_to_interview(data.workspace_id, data.company_id, data.metric_code, data.value, data.unit)
+    except Exception:
+        pass  # Non-fatal
+
+    await audit_service.emit(
+        event_type="METRIC_MANUAL_ENTRY",
+        actor_user_id=manager.user_id,
+        company_id=data.company_id,
+        workspace_id=data.workspace_id,
+        entity_table="metrics",
+        entity_id=metric.id,
+        payload={"metric_code": data.metric_code, "value": data.value, "unit": data.unit},
+    )
+    return api_response(MetricOut(**metric.model_dump()))
+
+
 @router.post("/{metric_id}/review", response_model=SuccessResponse[MetricOut])
 async def review_metric(
     metric_id: str,
@@ -145,4 +221,10 @@ async def review_metric(
         data.override_rationale,
         reviewer.company_id,
     )
+    if data.action == "approve":
+        try:
+            from app.services.interview_service import sync_metric_to_interview
+            await sync_metric_to_interview(res.workspace_id, res.company_id, res.metric_code, res.value, res.unit)
+        except Exception:
+            pass
     return api_response(MetricOut(**res.model_dump()))

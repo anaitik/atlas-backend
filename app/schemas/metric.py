@@ -65,6 +65,18 @@ class MetricReview(BaseModel):
     override_rationale: Optional[str] = None
 
 
+class ManualMetricEntry(BaseModel):
+    company_id: str
+    workspace_id: str
+    metric_code: str
+    name: str
+    value: float
+    unit: str
+    pillar: str = "environmental"
+    evidence_note: Optional[str] = None
+    evidence_document_id: Optional[str] = None
+
+
 class MetricSummaryCardOut(BaseModel):
     key: str
     label: str

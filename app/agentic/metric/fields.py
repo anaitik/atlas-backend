@@ -10,33 +10,9 @@ from .constants import GENERIC_FIELD_NAMES
 
 
 def _coerce_numeric(value: Any) -> float | None:
-    if isinstance(value, bool) or value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    if not isinstance(value, str):
-        return None
+    from app.services.numeric_utils import coerce_activity_numeric
 
-    text = value.strip()
-    if not text:
-        return None
-
-    candidate = text.replace(" ", "")
-    if "," in candidate and "." in candidate:
-        if candidate.rfind(",") > candidate.rfind("."):
-            candidate = candidate.replace(".", "").replace(",", ".")
-        else:
-            candidate = candidate.replace(",", "")
-    elif "," in candidate:
-        candidate = candidate.replace(",", ".")
-
-    match = re.search(r"-?\d+(?:\.\d+)?", candidate)
-    if not match:
-        return None
-    try:
-        return float(match.group())
-    except ValueError:
-        return None
+    return coerce_activity_numeric(value)
 
 
 def _normalize_key(value: str) -> str:

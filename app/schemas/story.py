@@ -10,6 +10,7 @@ class StoryEventOut(BaseModel):
     created_at: datetime
     headline: str
     detail: str
+    entity_label: Optional[str] = None
     payload: Dict[str, Any] = Field(default_factory=dict)
 
 

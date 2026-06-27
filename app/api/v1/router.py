@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, users, companies, documents, templates, extraction, metrics, admin, reports, story, settings
+from app.api.v1.endpoints import auth, users, companies, documents, templates, extraction, metrics, admin, reports, story, settings, interview, bank, notifications, audit
 
 api_router = APIRouter()
 
@@ -15,3 +15,7 @@ api_router.include_router(metrics.router, prefix="/metrics", tags=["Computed Met
 api_router.include_router(reports.router, prefix="/reports", tags=["Report Studio"])
 api_router.include_router(story.router, prefix="/story", tags=["Pipeline Story"])
 api_router.include_router(settings.router, prefix="/settings", tags=["Tenant Settings"])
+api_router.include_router(interview.router, prefix="/interview", tags=["VSME Interview"])
+api_router.include_router(bank.router, prefix="/bank", tags=["Bank Verification Portal"])
+api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
+api_router.include_router(audit.router, prefix="/audit", tags=["Audit Officer — Blueprint Review"])

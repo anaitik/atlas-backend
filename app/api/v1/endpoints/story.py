@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import hashlib
 
 from fastapi import APIRouter, Depends
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import require_app_user
 from app.core.responses import SuccessResponse, api_response
 from app.schemas.auth import TokenData
 from app.schemas.story import PipelineStoryOut, StoryEventOut
@@ -15,7 +15,7 @@ router = APIRouter()
 @router.get("/{workspace_id}", response_model=SuccessResponse[PipelineStoryOut])
 async def get_pipeline_story(
     workspace_id: str,
-    _user: Annotated[TokenData, Depends(get_current_user)],
+    _user: Annotated[TokenData, Depends(require_app_user)],
 ):
     """
     Get the narrative 'story' of the document pipeline for a workspace.
@@ -92,7 +92,7 @@ async def get_pipeline_story(
 @router.get("/{workspace_id}/events", response_model=SuccessResponse[List[StoryEventOut]])
 async def get_pipeline_events(
     workspace_id: str,
-    _user: Annotated[TokenData, Depends(get_current_user)],
+    _user: Annotated[TokenData, Depends(require_app_user)],
     limit: int = 20,
 ):
     """

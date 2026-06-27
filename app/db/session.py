@@ -44,6 +44,10 @@ async def connect_db() -> AsyncIOMotorDatabase:
     from app.models.metric_definition import MetricDefinition
     from app.models.emission_factor import EmissionFactor
     from app.models.report import Report
+    from app.models.interview_response import InterviewResponse
+    from app.models.bank_access import BankAccess
+    from app.models.app_config import AppConfig
+    from app.models.interview_blueprint import InterviewBlueprint
 
     await init_beanie(
         database=_database,
@@ -60,8 +64,17 @@ async def connect_db() -> AsyncIOMotorDatabase:
             MetricDefinition,
             EmissionFactor,
             Report,
+            InterviewResponse,
+            BankAccess,
+            AppConfig,
+            InterviewBlueprint,
         ],
     )
+
+    # Overlay admin-editable runtime config from the DB onto in-memory defaults.
+    # (load_from_db logs its own errors; defaults remain in effect on failure.)
+    from app.services import config_service
+    await config_service.load_from_db()
 
     return _database
 

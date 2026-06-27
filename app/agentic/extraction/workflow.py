@@ -241,7 +241,7 @@ async def run_extraction(
     )
 
     if auto_approve:
-        from app.services import metric_service, metric_agent_service
+        from app.services import esg_calculation_service, metric_service, metric_agent_service
 
         try:
             await metric_service.sync_metrics_from_approved_extraction(
@@ -255,6 +255,12 @@ async def run_extraction(
                 actor_id,
                 actor_company_id,
                 None,
+            )
+            await esg_calculation_service.run_workspace_esg_calculations(
+                doc.company_id,
+                doc.workspace_id,
+                actor_id,
+                actor_company_id,
             )
         except Exception as e:
             import structlog
@@ -298,7 +304,7 @@ async def run_extraction_prerun(
 
     from app.services import metric_service, metric_agent_service
 
-    metric_candidates = metric_service._metric_candidates(preview_extraction, template)
+    metric_candidates = metric_service._metric_candidates(preview_extraction, template, doc.filename)
     metric_recommendation = await metric_agent_service.recommend_metric_targets_for_extractions([preview_extraction])
     projected_metrics = await metric_agent_service.preview_metric_agent_for_extractions(
         [preview_extraction],
@@ -367,7 +373,7 @@ async def submit_review(
             actor_id,
             actor_company_id,
         )
-        from app.services import metric_agent_service
+        from app.services import esg_calculation_service, metric_agent_service
         try:
             await metric_agent_service.run_metric_agent_for_workspace(
                 record.company_id,
@@ -375,6 +381,12 @@ async def submit_review(
                 actor_id,
                 actor_company_id,
                 None
+            )
+            await esg_calculation_service.run_workspace_esg_calculations(
+                record.company_id,
+                record.workspace_id,
+                actor_id,
+                actor_company_id,
             )
         except Exception as e:
             import structlog

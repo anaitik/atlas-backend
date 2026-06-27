@@ -17,8 +17,11 @@ NON_METRIC_FIELD_EXACT = {
     "invoice_number",
     "period_end",
     "period_start",
+    "reporting_period_end",
+    "reporting_period_start",
     "currency",
     "meter_readings_present",
+    "evidence_doc_type",
 }
 
 NON_METRIC_FIELD_TOKENS = {
@@ -117,7 +120,11 @@ def _is_metric_field_candidate(field_key: str, payload: dict[str, Any]) -> bool:
         return False
 
     has_metric_signal = bool(tokens & METRIC_SIGNAL_TOKENS)
-    has_unit_signal = bool(payload.get(f"{field_key}_unit") or payload.get("unit"))
+    # Global payload.unit applies to the primary value field only — not every numeric key.
+    has_unit_signal = bool(
+        payload.get(f"{field_key}_unit")
+        or (field_key == "value" and payload.get("unit"))
+    )
     has_non_metric_signal = bool(tokens & NON_METRIC_FIELD_TOKENS)
 
     if has_non_metric_signal and not has_metric_signal:
@@ -161,38 +168,9 @@ async def compute_and_store_metric(
 
 
 def _coerce_numeric(value: Any) -> float | None:
-    if isinstance(value, bool) or value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    if not isinstance(value, str):
-        return None
+    from app.services.numeric_utils import coerce_activity_numeric
 
-    text = value.strip()
-    if not text:
-        return None
-
-    candidate = text.replace(" ", "")
-    import re
-
-    if not re.match(r"^[^\dA-Za-z\-+]*[-+]?\d", candidate):
-        return None
-
-    if "," in candidate and "." in candidate:
-        if candidate.rfind(",") > candidate.rfind("."):
-            candidate = candidate.replace(".", "").replace(",", ".")
-        else:
-            candidate = candidate.replace(",", "")
-    elif "," in candidate:
-        candidate = candidate.replace(",", ".")
-
-    match = re.search(r"-?\d+(?:\.\d+)?", candidate)
-    if not match:
-        return None
-    try:
-        return float(match.group())
-    except ValueError:
-        return None
+    return coerce_activity_numeric(value)
 
 
 def _normalize_unit(unit: str | None) -> str:
@@ -296,7 +274,33 @@ def build_workspace_metric_summary(
     }
 
 
-def _metric_candidates(extraction: ExtractedData, template: SchemaTemplate) -> list[MetricCreate]:
+def _source_document_label(document_filename: str | None, template_name: str) -> str:
+    label = (document_filename or "").strip()
+    return label or template_name
+
+
+def _metric_row_metadata(
+    extraction: ExtractedData,
+    template: SchemaTemplate,
+    field_key: str,
+    document_filename: str | None = None,
+) -> dict[str, Any]:
+    metadata = {
+        "field_key": field_key,
+        "template_id": template.id,
+        "template_name": template.name,
+        "document_id": extraction.document_id,
+    }
+    if document_filename:
+        metadata["source_document_name"] = document_filename
+    return metadata
+
+
+def _metric_candidates(
+    extraction: ExtractedData,
+    template: SchemaTemplate,
+    document_filename: str | None = None,
+) -> list[MetricCreate]:
     payload = extraction.payload or {}
     if not isinstance(payload, dict):
         return []
@@ -324,15 +328,11 @@ def _metric_candidates(extraction: ExtractedData, template: SchemaTemplate) -> l
             candidates.append(
                 MetricCreate(
                     metric_code=f"{template.id}:{target.get('metric_code', field_key)}:{extraction.id}",
-                    name=target.get("name", f"{template.name} - {field_key.replace('_', ' ').title()}"),
+                    name=target.get("name")
+                    or _source_document_label(document_filename, template.name),
                     unit=resolved_unit,
                     value=numeric_value,
-                    metadata={
-                        "field_key": field_key,
-                        "template_id": template.id,
-                        "template_name": template.name,
-                        "document_id": extraction.document_id,
-                    },
+                    metadata=_metric_row_metadata(extraction, template, field_key, document_filename),
                     source_extracted_data_ids=[extraction.id],
                 )
             )
@@ -347,15 +347,10 @@ def _metric_candidates(extraction: ExtractedData, template: SchemaTemplate) -> l
         candidates.append(
             MetricCreate(
                 metric_code=f"{template.id}:value:{extraction.id}",
-                name=template.name,
+                name=_source_document_label(document_filename, template.name),
                 unit=unit or "value",
                 value=primary_value,
-                metadata={
-                    "field_key": "value",
-                    "template_id": template.id,
-                    "template_name": template.name,
-                    "document_id": extraction.document_id,
-                },
+                metadata=_metric_row_metadata(extraction, template, "value", document_filename),
                 source_extracted_data_ids=[extraction.id],
             )
         )
@@ -372,15 +367,10 @@ def _metric_candidates(extraction: ExtractedData, template: SchemaTemplate) -> l
         candidates.append(
             MetricCreate(
                 metric_code=f"{template.id}:{key}:{extraction.id}",
-                name=f"{template.name} - {key.replace('_', ' ').title()}",
+                name=f"{_source_document_label(document_filename, template.name)} — {key.replace('_', ' ').title()}",
                 unit=str(payload.get(f"{key}_unit") or payload.get("unit") or key),
                 value=numeric_value,
-                metadata={
-                    "field_key": key,
-                    "template_id": template.id,
-                    "template_name": template.name,
-                    "document_id": extraction.document_id,
-                },
+                metadata=_metric_row_metadata(extraction, template, key, document_filename),
                 source_extracted_data_ids=[extraction.id],
             )
         )
@@ -401,13 +391,18 @@ async def sync_metrics_from_approved_extraction(
     if not template:
         return []
 
+    from app.models.document import Document
+
+    document = await Document.get(extraction.document_id)
+    document_filename = document.filename if document else None
+
     from app.services.workflow_service import get_workflow_policy
     policy = await get_workflow_policy(extraction.workspace_id)
     initial_status = "pending" if policy.require_metric_approval else "approved"
     initial_reviewer = actor_id if initial_status == "approved" else None
 
     metrics: list[Metric] = []
-    for candidate in _metric_candidates(extraction, template):
+    for candidate in _metric_candidates(extraction, template, document_filename):
         candidate.metadata = {
             **candidate.metadata,
             "source_type": "extraction_sync",
@@ -508,6 +503,17 @@ async def sync_workspace_metrics(
                 actor_company_id,
             )
         )
+
+    from app.services import esg_calculation_service
+
+    synced.extend(
+        await esg_calculation_service.run_workspace_esg_calculations(
+            company_id,
+            workspace_id,
+            actor_id,
+            actor_company_id,
+        )
+    )
     return synced
 
 async def review_metric(

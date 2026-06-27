@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "schema_version": "indicative_v1",
+    "purpose": "Sector-relative reference points for the Atlas ESG performance score. Used ONLY to position a borrower against typical peers in its NACE section. Where a borrower's sector is unknown ('OTHER') or required inputs are missing, NO benchmarked score is produced — the engine never fabricates a comparison.",
+    "carbon_intensity": {
+      "unit": "tCO2e per EUR million of turnover",
+      "field": "carbon_intensity_tco2e_per_eur_m",
+      "derivation": "Sector GHG intensity per EUR of gross value added (GVA) from CSO Ireland 'Economic Intensity of Greenhouse Gas Emissions by Activity 2023' (NACE Rev.2), cross-checked against Eurostat env_ac_aeint_r2 (EU-27). Converted to a turnover basis using an assumed economy-wide GVA/turnover ratio of 0.45. Because g CO2e/EUR-GVA x 0.45 is numerically equal to tCO2e per EUR-million of turnover, the section median below = (g CO2e/EUR-GVA) x 0.45, rounded to 2 significant figures.",
+      "confidence": "indicative — single-country EU proxy with a flat GVA/turnover assumption. Intended to position a borrower as low/typical/high vs peers, NOT as an audited absolute. Replace per-deployment with the bank's own loan-book medians for production underwriting.",
+      "sources": [
+        "CSO Ireland — Output and Value Added by Activity 2024, 'Economic Intensity of Greenhouse Gas Emissions' (Table 7.1), reference year 2023, NACE Rev.2.",
+        "Eurostat — Air emissions intensities by NACE Rev.2 activity (env_ac_aeint_r2); EU-27 all-activity GHG intensity ~124 g CO2e/EUR GVA (2023)."
+      ],
+      "scoring_curve": {
+        "note": "Score is sector-relative. ratio = company_intensity / sector_median. <=0.5 -> 100 (half the typical peer footprint). =1.0 -> 55 (typical). >=3.0 -> 10 (3x+ worse than peers). Linear between anchor points.",
+        "anchors": [[0.5, 100], [1.0, 55], [2.0, 30], [3.0, 10]]
+      }
+    },
+    "absolute_references": {
+      "note": "These are scored on an absolute scale (no sector benchmark needed) because higher/lower is unambiguously better regardless of industry.",
+      "renewable_pct": "Linear 0% -> 0, 100% -> 100. EU-27 grid renewable share ~45% (2023) shown as context only.",
+      "recycling_pct": "Linear 0% -> 0, 100% -> 100. EU municipal recycling rate ~48% (Eurostat 2022) shown as context only.",
+      "gender_female_pct": "Peaks at gender balance. Score = 100 - 2.5 * |pct - 45|, clamped 0-100 (45% treated as balanced midpoint of the 40-50% balance band).",
+      "safety_incidents_per_100_fte": "Lower is better. 0 -> 100, 1 -> 70, 3 -> 40, >=8 -> 0. Linear between. Indicative bands; sector-specific OSH norms vary."
+    }
+  },
+  "sectors": {
+    "A": { "label": "Agriculture, Forestry & Fishing", "carbon_intensity_tco2e_per_eur_m": 2260, "intensity_confidence": "high_sector_specificity" },
+    "B": { "label": "Mining & Quarrying", "carbon_intensity_tco2e_per_eur_m": 27, "intensity_confidence": "indicative" },
+    "C": { "label": "Manufacturing", "carbon_intensity_tco2e_per_eur_m": 110, "intensity_confidence": "wide_subsector_spread", "note": "Manufacturing spans 3 (pharma/electronics) to 4000+ (basic metals, cement) g/EUR-GVA. Section median used; verify against borrower's specific NACE division for heavy industry." },
+    "D": { "label": "Electricity, Gas & Steam", "carbon_intensity_tco2e_per_eur_m": 600, "intensity_confidence": "indicative" },
+    "E": { "label": "Water Supply, Sewerage & Waste", "carbon_intensity_tco2e_per_eur_m": 230, "intensity_confidence": "wide_subsector_spread" },
+    "F": { "label": "Construction", "carbon_intensity_tco2e_per_eur_m": 38, "intensity_confidence": "indicative" },
+    "G": { "label": "Wholesale & Retail Trade", "carbon_intensity_tco2e_per_eur_m": 18, "intensity_confidence": "indicative" },
+    "H": { "label": "Transport & Storage", "carbon_intensity_tco2e_per_eur_m": 255, "intensity_confidence": "wide_subsector_spread", "note": "Land transport ~565 g/EUR-GVA; warehousing far lower; water/air transport extreme outliers. Section value reflects typical MSME land-transport/logistics; verify for shipping/aviation." },
+    "I": { "label": "Accommodation & Food Service", "carbon_intensity_tco2e_per_eur_m": 10, "intensity_confidence": "indicative" },
+    "J": { "label": "Information & Communication", "carbon_intensity_tco2e_per_eur_m": 3, "intensity_confidence": "indicative" },
+    "K": { "label": "Financial & Insurance", "carbon_intensity_tco2e_per_eur_m": 1.5, "intensity_confidence": "indicative", "note": "Operational (Scope 1+2) intensity only. Financed emissions (Scope 3, PCAF) are out of scope and dominate the real footprint of this sector." },
+    "L": { "label": "Real Estate", "carbon_intensity_tco2e_per_eur_m": 1, "intensity_confidence": "indicative" },
+    "M": { "label": "Professional, Scientific & Technical", "carbon_intensity_tco2e_per_eur_m": 3, "intensity_confidence": "indicative" },
+    "N": { "label": "Administrative & Support", "carbon_intensity_tco2e_per_eur_m": 4, "intensity_confidence": "indicative" },
+    "Q": { "label": "Human Health & Social Work", "carbon_intensity_tco2e_per_eur_m": 13, "intensity_confidence": "indicative" },
+    "OTHER": { "label": "Other / Unclassified", "carbon_intensity_tco2e_per_eur_m": null, "intensity_confidence": "no_benchmark", "note": "No sector benchmark — carbon-intensity sub-score is omitted and weights renormalize. Borrower should be reclassified to a specific NACE section for peer comparison." }
+  },
+  "turnover_midpoints_eur": {
+    "_note": "Midpoint EUR used to estimate turnover from the collected range. '1B+' and '<40M' use representative points, flagged as estimates in the score trace.",
+    "<40M": 20000000,
+    "40M-150M": 95000000,
+    "150M-1B": 575000000,
+    "1B+": 1500000000
+  }
+}

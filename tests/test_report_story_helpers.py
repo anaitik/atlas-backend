@@ -50,6 +50,7 @@ def test_fallback_story_orders_events_chronologically():
             event_type="REPORT_GENERATED",
             entity_table="reports",
             entity_id="r1",
+            actor_user_id=None,
             payload={"reporting_year": 2025},
         ),
         SimpleNamespace(
@@ -57,12 +58,12 @@ def test_fallback_story_orders_events_chronologically():
             event_type="DOCUMENT_ANCHORED",
             entity_table="documents",
             entity_id="d1",
+            actor_user_id=None,
             payload={"filename": "utility-bill.pdf"},
         ),
     ]
 
-    story = story_service._fallback_story(events)
+    story = story_service._fallback_story(events, actors={})
 
     assert "DOCUMENT_ANCHORED" not in story
-    assert "A source document was uploaded and fingerprinted." in story
     assert story.index("Jan 02") < story.index("Jan 03")

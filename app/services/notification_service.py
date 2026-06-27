@@ -22,7 +22,7 @@ async def notify(
     body: str = "",
     resource_url: Optional[str] = None,
 ) -> Notification:
-    """Create a notification for a user."""
+    """Create an in-app notification and attempt an email if SMTP is configured."""
     notification = Notification(
         recipient_user_id=recipient_user_id,
         event_type=event_type,
@@ -32,11 +32,24 @@ async def notify(
     )
     await notification.insert()
 
-    logger.info(
-        "notification_created",
-        recipient=recipient_user_id,
-        event_type=event_type,
-    )
+    logger.info("notification_created", recipient=recipient_user_id, event_type=event_type)
+
+    # Fire-and-forget email (non-blocking, fails silently)
+    try:
+        from app.models.user import User
+        from app.services.email_service import send_email
+        user = await User.find_one({"id": recipient_user_id})
+        if user and user.email:
+            await send_email(
+                to=user.email,
+                subject=title,
+                title=title,
+                body=body or title,
+                cta_label="Open Atlas",
+                cta_url=resource_url,
+            )
+    except Exception:
+        pass
 
     return notification
 

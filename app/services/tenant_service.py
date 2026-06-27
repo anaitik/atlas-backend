@@ -50,6 +50,12 @@ async def create_workspace(company_id: str, data: WorkspaceCreate, actor_id: str
         region=(data.region or "EU").upper(),
         reporting_year=data.reporting_year,
         scope2_method=(data.scope2_method or "location_based").lower(),
+        nace_sector=data.nace_sector,
+        employee_count_range=data.employee_count_range,
+        turnover_range_eur=data.turnover_range_eur,
+        is_listed=data.is_listed,
+        is_first_time_reporter=data.is_first_time_reporter,
+        material_topics=data.material_topics or [],
     )
     await workspace.insert()
 

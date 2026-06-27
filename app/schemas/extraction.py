@@ -161,6 +161,8 @@ class AuditEventOut(BaseModel):
     id: str
     event_type: str
     actor_user_id: Optional[str] = None
+    actor_name: Optional[str] = None
+    actor_email: Optional[str] = None
     company_id: Optional[str] = None
     workspace_id: Optional[str] = None
     entity_table: Optional[str] = None

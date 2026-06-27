@@ -1,7 +1,7 @@
 from typing import Annotated, List, Optional
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from app.dependencies.auth import get_current_user, require_role, require_manager, require_owner
+from app.dependencies.auth import require_app_user, require_role, require_manager, require_owner
 from app.core.responses import api_response, SuccessResponse
 from app.schemas.auth import TokenData
 from app.schemas.settings import WorkspaceSettings, WorkspaceSettingsUpdate
@@ -55,7 +55,7 @@ class EmissionFactorCreate(BaseModel):
 
 @router.get("/", response_model=SuccessResponse[WorkspaceSettings])
 async def get_settings(
-    user: Annotated[TokenData, Depends(get_current_user)],
+    user: Annotated[TokenData, Depends(require_app_user)],
 ):
     """
     Get workspace settings.

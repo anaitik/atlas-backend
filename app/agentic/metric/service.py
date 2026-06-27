@@ -288,6 +288,7 @@ async def preview_metric_agent_for_extractions(
             record["status"] = record.get("status", "OK")
 
         record["name"] = definition.get("description", metric_key)
+        record["metric_label"] = record["name"]
         record["pillar"] = definition.get("pillar", "environmental")
         record["source_extracted_data_ids"] = _metric_source_ids(source_index, record.get("input_keys", []))
         preview.append(record)

@@ -21,8 +21,24 @@ from app.schemas.extraction import (
     ReviewRequest,
 )
 from app.services import audit_service, extraction_agent
+from app.models.user import User
 
 router = APIRouter()
+
+
+async def _audit_events_to_out(events: list) -> list[AuditEventOut]:
+    actor_ids = list({event.actor_user_id for event in events if event.actor_user_id})
+    users = await User.find({"id": {"$in": actor_ids}}).to_list() if actor_ids else []
+    users_by_id = {user.id: user for user in users}
+    results: list[AuditEventOut] = []
+    for event in events:
+        payload = event.model_dump()
+        actor = users_by_id.get(event.actor_user_id or "")
+        if actor:
+            payload["actor_name"] = actor.full_name
+            payload["actor_email"] = actor.email
+        results.append(AuditEventOut(**payload))
+    return results
 
 
 def _to_float(value: Any) -> float | None:
@@ -124,7 +140,7 @@ async def extraction_insights(
         if run.status in {"pending_review", "failed"}:
             needs_review_count += 1
 
-        template_name = template_by_id.get(run.template_id).name if template_by_id.get(run.template_id) else run.template_id
+        template_name = template_by_id.get(run.template_id).name if template_by_id.get(run.template_id) else "Unknown document type"
         evidence_documents.append(
             EvidenceDocumentOut(
                 extraction_id=run.id,
@@ -141,7 +157,7 @@ async def extraction_insights(
 
     for template_id, template_runs in grouped_runs.items():
         template = template_by_id.get(template_id)
-        template_name = template.name if template else template_id
+        template_name = template.name if template else "Unknown document type"
         required_fields = list((template.schema_definition or {}).keys()) if template else []
         approved_count = sum(1 for item in template_runs if item.status == "approved")
         pending_count = sum(1 for item in template_runs if item.status in {"pending_review", "failed"})
@@ -332,4 +348,4 @@ async def extraction_audit_timeline(
         key=lambda item: item.created_at,
         reverse=True,
     )
-    return api_response([AuditEventOut(**event.model_dump()) for event in all_events[:80]])
+    return api_response(await _audit_events_to_out(all_events[:80]))
